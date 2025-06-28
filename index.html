@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Model Tata Surya</title>
+
+  <style>
+    /* ====== Tampilan global ====== */
+    html,body{
+      margin:0;
+      padding:0;
+      color:#fff;
+      font-family:'Times New Roman', Times, serif;
+      font-size: larger;
+    }
+
+    h1{
+      text-align:center;
+      color:#43a9f8;
+    }
+
+    /* ====== Langit berbintang ====== */
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      background:radial-gradient(ellipse at bottom,#0b0f2a 0%,#050819 100%);
+      z-index:-2;
+    }
+
+    body::after{
+      content:"";
+      position:fixed;
+      inset:0;
+      background:url("./images/background.jpg") repeat;           
+      opacity:.4;
+      animation:drift 120s linear infinite;
+      z-index:-1;
+    }
+    
+    @keyframes drift {
+      from{background-position:0 0;}
+      to  {background-position:-2000px 2000px;}
+    }
+
+    /* ====== Kanvas tata surya ====== */
+    .solar-system{
+      position:relative;
+      width:min(100%,1200px);
+      aspect-ratio:2/1; 
+      margin-inline:auto;
+    }
+
+    .orbit{
+      position:absolute;
+      top:50%; left:0%;
+      border:2px solid rgba(180,220,255,.35);
+      border-radius:50%;
+      pointer-events:none;
+      transform:translate(-50%,-50%);
+    }
+
+    /* Matahari & planet */
+    .body{
+      position:absolute;
+      transform:translate(-50%,-50%);
+      border-radius:50%;
+      cursor:pointer;
+      transition:filter .25s;
+    }
+    .body:hover{filter:brightness(1.35);}
+    .sun{z-index:10;}
+
+    .label{
+      position:absolute;
+      top:calc(100% + .35rem);
+      left:50%;
+      transform:translateX(-50%);
+      font-size:.75rem;
+      white-space:nowrap;
+      pointer-events:none;
+    }
+
+    /* Kotak info */
+    dialog{
+      max-width:500px;
+      border:none;
+      border-radius:10px;
+      background:#111b2e;
+      padding:1.2rem 1.5rem;
+      color:#fff;
+      box-shadow:0 0 30px #0ff;
+    }
+
+    dialog::backdrop{background:rgba(0,0,0,.7)}
+
+    dialog h2{color:#0ff;margin:.3rem 0 .75rem;}
+
+    dialog button{
+      padding:.5rem 1rem;
+      margin-top:1rem;
+      border:none;
+      border-radius:5px;
+      background:#0ff;
+      color:#000;
+      font-weight:bold;
+      cursor:pointer;
+    }
+
+    /* ====== RESPONSIVE (ukuran layar ≤ 768 px) ====== */
+@media (max-width: 768px){
+
+  /* perkecil seluruh tata surya */
+  .solar-system{
+    /* skala 0.75 untuk tablet / HP besar */
+    transform: scale(.75);
+    transform-origin: left top;   /* titik acuan di kiri‑atas */
+    height:auto;                  /* biar tinggi ikut mengecil */
+  }
+
+  /* perkecil teks label planet */
+  .label{
+    font-size: .6rem;
+  }
+
+  /* kotak info di‑turunkan lebarnya */
+  dialog{
+    max-width: 80vw;              /* 80% lebar viewport  */
+    bottom: 1rem;
+    right: 1rem;
+    padding: .9rem 1rem;
+  }
+}
+
+/* ====== RESPONSIVE (ukuran layar ≤ 480 px) ====== */
+@media (max-width: 480px){
+
+  .solar-system{
+    transform: scale(.55);
+  }
+  h1{ font-size: 1.4rem; }
+  .label{ font-size: .55rem; }
+  dialog{
+    max-width: 90vw;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
+}
+
+
+  </style>
+</head>
+<body>
+  <h1>Tata Surya</h1>
+
+  <div class="solar-system" id="canvas"></div>
+
+  <dialog id="info">
+    <h2 id="title"></h2>
+    <p id="desc"></p>
+    <button onclick="info.close()">Tutup</button>
+  </dialog>
+
+  <script>
+  (()=>{
+    const ELLIPSE_RATIO = 1.6; 
+
+    const DATA = [
+      {id:"sun", name:"Matahari", size:180, orbit:0,   angle:0,
+       img:"https://i.pinimg.com/736x/c2/ea/0e/c2ea0e3c05d1460c8bd717f25aa77ad9.jpg",
+       desc:"Pusat Tata Surya dan sumber energi."},
+
+      {id:"mercury", name:"Merkurius",size:26, orbit:120, angle:0,
+       img:"images/markurius.png",
+       desc:"Planet yang terdekat ke Matahari, jarak 57,9 juta km dari matahari permukaan penuh kawah, suhu ekstrem, tidak punya satelit."},
+
+      {id:"venus", name:"Venus",    size:36, orbit:170, angle:-25,
+       img:"images/venus.png",
+       desc:"Planet yang mirip Bumi, atmosfer tebal CO₂, sangat panas, tidak punya satelit. Planet yang memiliki jarak dari matahari 108 juta km."},
+
+      {id:"earth", name:"Bumi",     size:38, orbit:220, angle:-15,
+       img:"images/bumi.png",
+       desc:"Planet tempat kita tinggal,dan Satu-satunya planet yang diketahui mendukung kehidupan, satu satelit (Bulan). memiliki jarak dari matahari 150 juta km"},
+
+      {id:"mars", name:"Mars",     size:30, orbit:270, angle:5,
+       img:"images/mars.png",
+       desc:"Dijuluki planet merah, permukaan berbatu, dua satelit kecil (Phobos & Deimos). Memiliki jarak dari matahari 228 juta km."},
+
+      {id:"jupiter", name:"Jupiter",  size:90, orbit:340, angle:-35,
+       img:"images/jupiter.png",
+       desc:"Planet terbesar, raksasa gas, banyak satelit (termasuk Ganymede, satelit terbesar di Tata Surya).Jarak dari matahari 779 juta km."},
+
+      {id:"saturn", name:"Saturnus", size:82, orbit:400, angle:10,
+       img:"images/saturnus.png",
+       desc:"Planet yang dikenal dengan cincin spektakuler, raksasa gas, banyak satelit. 1.430 juta km jarak dari matahari."},
+
+      {id:"uranus", name:"Uranus",   size:60, orbit:450, angle:-30,
+       img:"images/uranus.png",
+       desc:"Planet yang Mengorbit dengan kemiringan ekstrem. Raksasa es, berputar miring, atmosfer mengandung metana. Memiliki jarak 2.880 juta km"},
+
+      {id:"neptune", name:"Neptunus", size:60, orbit:500, angle:-15,
+       img:"images/neptunus.png",
+       desc:"Planet terluar bercuaca ganas. Raksasa es, atmosfer biru karena metana, angin tercepat di Tata Surya. 4.500 juta km jarak ke Matahari"}
+    ];
+
+    const canvas = document.getElementById("canvas");
+    const dlg    = document.getElementById("info");
+    const ttl    = document.getElementById("title");
+    const desc   = document.getElementById("desc");
+
+    /* ====== Gambar orbit ====== */
+    DATA.filter(o=>o.orbit).forEach(o=>{
+      const d=document.createElement("div");
+      d.className="orbit";
+      d.style.width  = o.orbit*2*ELLIPSE_RATIO+"px";
+      d.style.height = o.orbit*2+"px";
+      canvas.appendChild(d);
+    });
+
+    /* ====== Gambar matahari & planet ====== */
+    DATA.forEach(obj=>{
+      const el = document.createElement("div");
+      el.className = obj.id==="sun" ? "body sun" : "body";
+      el.style.width = el.style.height = obj.size+"px";
+
+      if(obj.orbit){               
+        const rad = obj.angle*Math.PI/180;
+        const x = Math.cos(rad)*obj.orbit*ELLIPSE_RATIO;
+        const y = Math.sin(rad)*obj.orbit;
+        el.style.left = `calc(0% + ${x}px)`;
+        el.style.top  = `calc(50% + ${y}px)`;
+      } else {                    
+        el.style.left = "0%";
+        el.style.top  = "50%";
+      }
+
+      el.style.background = `url("${obj.img}") center/cover`;
+
+      /* label */
+      const lab = document.createElement("div");
+      lab.className="label";
+      lab.textContent=obj.name;
+      el.appendChild(lab);
+
+      /* klik */
+      el.addEventListener("click",()=>{
+        ttl.textContent=obj.name;
+        desc.textContent=obj.desc;
+        dlg.showModal();
+      });
+
+      el.addEventListener("pointerenter", () => {
+      el.animate(
+        [
+          { transform: "translate(-50%,-50%) scale(1)"   },
+          { transform: "translate(-40%,-45%) scale(1.25)" },
+          { transform: "translate(-50%,-50%) scale(1)"   }
+        ],
+        { duration: 600 }
+      );
+    });
+
+      canvas.appendChild(el);
+    })
+})();
+  </script>
+</body>
+</html>
