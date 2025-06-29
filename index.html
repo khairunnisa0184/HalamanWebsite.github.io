@@ -108,33 +108,8 @@
       cursor:pointer;
     }
 
-    /* ====== RESPONSIVE (ukuran layar ≤ 768 px) ====== */
-@media (max-width: 768px){
-
-  /* perkecil seluruh tata surya */
-  .solar-system{
-    /* skala 0.75 untuk tablet / HP besar */
-    transform: scale(.75);
-    transform-origin: left top;   /* titik acuan di kiri‑atas */
-    height:auto;                  /* biar tinggi ikut mengecil */
-  }
-
-  /* perkecil teks label planet */
-  .label{
-    font-size: .6rem;
-  }
-
-  /* kotak info di‑turunkan lebarnya */
-  dialog{
-    max-width: 80vw;              /* 80% lebar viewport  */
-    bottom: 1rem;
-    right: 1rem;
-    padding: .9rem 1rem;
-  }
-}
-
-/* ====== RESPONSIVE (ukuran layar ≤ 480 px) ====== */
-@media (max-width: 480px){
+/* ====== RESPONSIVE (ukuran layar ≤ 720 px) ====== */
+@media (max-width: 720px){
 
   .solar-system{
     transform: scale(.55);
